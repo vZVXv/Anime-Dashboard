@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Anime Dashboard v1.2.2</title>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(to right, #24243e, #302b63, #0f0c29);
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --text-main: #e0e0e0;
+            --accent: #6e8efb;
+            --gold: #ffcc33;
+        }
+
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            background: var(--bg-gradient); 
+            color: var(--text-main);
+            min-height: 100vh;
+            margin: 0; padding: 20px;
+        }
+
+        .dashboard {
+            background: rgba(110, 142, 251, 0.15);
+            border: 1px solid var(--accent);
+            border-radius: 20px;
+            padding: 15px 30px;
+            display: flex; justify-content: space-between; align-items: center;
+            backdrop-filter: blur(15px);
+            max-width: 1540px; margin: 0 auto 30px auto;
+            position: sticky; top: 10px; z-index: 1000;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+        }
+
+        .dash-left { display: flex; gap: 10px; align-items: center; }
+
+        .stats-group { display: flex; gap: 30px; visibility: hidden; }
+        .stat-item { text-align: center; }
+        .stat-value { display: block; font-size: 1.2rem; font-weight: bold; color: #fff; }
+        .stat-label { font-size: 0.65rem; opacity: 0.7; text-transform: uppercase; }
+
+        #fileInput { display: none; }
+        .btn-action {
+            background: linear-gradient(45deg, #6e8efb, #a777e3);
+            color: white; padding: 10px 20px; border-radius: 12px;
+            cursor: pointer; font-size: 0.85rem; font-weight: bold; 
+            transition: 0.3s; border: none; outline: none; display: flex; align-items: center;
+            text-decoration: none;
+        }
+        .btn-action:hover { opacity: 0.9; transform: translateY(-1px); }
+        .btn-random { background: linear-gradient(45deg, #f093fb, #f5576c); }
+        .btn-archive { background: linear-gradient(45deg, #4facfe, #00f2fe); }
+        .btn-clear { background: rgba(248, 113, 113, 0.2); border: 1px solid #f87171; color: #f87171; }
+
+        #searchInput {
+            background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 10px 15px; border-radius: 12px; color: white; width: 250px; outline: none;
+        }
+
+        .container { display: flex; gap: 25px; justify-content: center; flex-wrap: wrap; }
+        .column { 
+            background: var(--card-bg); border: 1px solid rgba(255,255,255,0.1); 
+            border-radius: 20px; width: 490px; padding: 25px; box-sizing: border-box;
+        }
+
+        h2 { 
+            text-align: center; font-size: 1.6rem; 
+            border-bottom: 2px solid rgba(255,255,255,0.1); 
+            padding-bottom: 20px; display: flex; justify-content: center; align-items: baseline; gap: 15px; 
+            margin-top: 0; letter-spacing: 0.5px;
+        }
+        .counter { opacity: 0.8; font-weight: 800; font-size: 1.8rem; font-family: 'Courier New', monospace; }
+        
+        .completed h2 { color: #4ade80; text-shadow: 0 0 15px rgba(74, 222, 128, 0.3); } 
+        .planned h2 { color: #60a5fa; text-shadow: 0 0 15px rgba(96, 165, 250, 0.3); } 
+        .dropped h2 { color: #f87171; text-shadow: 0 0 15px rgba(248, 113, 113, 0.3); }
+
+        ul { list-style: none; padding: 0; margin: 0; min-height: 50px; }
+        li { 
+            padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); 
+            display: flex; align-items: center; gap: 15px; transition: 0.3s;
+            position: relative;
+        }
+        li:hover { background: rgba(255,255,255,0.05); border-radius: 12px; }
+        li.hidden { display: none !important; }
+        li.highlight-random { background: rgba(255, 204, 51, 0.2); transform: scale(1.02); border-radius: 12px; }
+
+        .list-poster { width: 60px; height: 85px; border-radius: 6px; object-fit: cover; transition: transform 0.3s ease; z-index: 10; background: rgba(255,255,255,0.05); flex-shrink: 0; }
+        .list-poster:hover:not([src*="yandex"]) { transform: scale(3); z-index: 999; border: 1px solid var(--accent); }
+
+        .main-info { flex-grow: 1; display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+        .anime-link { 
+            color: #fff; text-decoration: none; font-weight: 600; font-size: 0.95rem; line-height: 1.2;
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+            overflow: hidden; word-break: break-word;
+        }
+        .meta-row { display: flex; gap: 10px; font-size: 11px; color: #bbb; align-items: center; }
+        .type-tag { background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; text-transform: uppercase; color: #e0e0e0; }
+        .score { 
+            background: rgba(0, 0, 0, 0.4); padding: 6px 12px; border-radius: 10px; 
+            font-size: 12px; color: var(--gold); font-weight: bold; 
+            white-space: nowrap; flex-shrink: 0; border: 1px solid rgba(255, 204, 51, 0.1);
+        }
+
+        /* --- СТИЛИ АРХИВА --- */
+        #fullScreenGrid {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: #0f0c29; z-index: 2000; overflow-y: auto; padding: 40px; box-sizing: border-box;
+        }
+        .grid-header { display: flex; justify-content: space-between; align-items: center; max-width: 1700px; margin: 0 auto 30px; }
+        
+        .grid-layout { 
+            display: grid; 
+            grid-template-columns: repeat(8, 1fr); 
+            gap: 15px; 
+            max-width: 1700px; 
+            margin: 0 auto; 
+        }
+
+        @media (max-width: 1400px) { .grid-layout { grid-template-columns: repeat(6, 1fr); } }
+        @media (max-width: 1000px) { .grid-layout { grid-template-columns: repeat(4, 1fr); } }
+
+        .grid-card {
+            background: rgba(255, 255, 255, 0.05); border-radius: 12px; overflow: hidden;
+            transition: 0.3s; border: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column;
+            cursor: pointer; text-decoration: none !important; color: inherit !important;
+        }
+        .grid-card:hover { transform: translateY(-5px); border-color: var(--accent); box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
+        .grid-card img { width: 100%; height: 270px; object-fit: cover; background: #1a1a2e; border: none; }
+        .grid-card-info { padding: 10px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between; gap: 8px; }
+        .grid-card-title { font-size: 0.85rem; font-weight: bold; color: #fff !important; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard">
+        <div class="dash-left">
+            <label id="fileLabel" for="fileInput" class="btn-action">📂 Загрузить JSON</label>
+            <input type="file" id="fileInput" accept=".json">
+            <button id="viewGridBtn" class="btn-action btn-archive" style="display: none;">🖼 Архив</button>
+            <button id="randomBtn" class="btn-action btn-random" style="display: none;">🎲 Рандом</button>
+            <button id="clearBtn" class="btn-action btn-clear" style="display: none;">🗑 Сброс</button>
+        </div>
+        <div class="stats-group" id="statsDisplay">
+            <div class="stat-item"><span class="stat-value" id="totalEpisodes">0</span><span class="stat-label">Эпизодов</span></div>
+            <div class="stat-item"><span class="stat-value" id="totalTime">0</span><span class="stat-label">Времени потрачено</span></div>
+            <div class="stat-item"><span class="stat-value" id="avgScore">0</span><span class="stat-label">Средний балл</span></div>
+        </div>
+        <div class="dash-right"><input type="text" id="searchInput" placeholder="Поиск аниме..."></div>
+    </div>
+
+    <div class="container">
+        <div class="column completed"><h2>Просмотрено <span id="count-completed" class="counter">0</span></h2><ul id="completedList"></ul></div>
+        <div class="column planned"><h2>В планах <span id="count-planned" class="counter">0</span></h2><ul id="plannedList"></ul></div>
+        <div class="column dropped"><h2>Брошено <span id="count-dropped" class="counter">0</span></h2><ul id="droppedList"></ul></div>
+    </div>
+
+    <div id="fullScreenGrid">
+        <div class="grid-header">
+            <h1 style="margin: 0; color: #4ade80;">Архив просмотренного</h1>
+            <button id="closeGrid" class="btn-action" style="background: #f87171;">Закрыть ✕</button>
+        </div>
+        <div id="gridContainer" class="grid-layout"></div>
+    </div>
+
+    <script>
+        let animeData = [];
+        const fallbackImg = "https://avatars.mds.yandex.net/i?id=c081274598b979603bc61cf5c4b65e8e_l-5307457-images-thumbs&n=13";
+        const dbName = "AnimePosterCache";
+        let db;
+
+        const request = indexedDB.open(dbName, 1);
+        request.onupgradeneeded = (e) => e.target.result.createObjectStore("posters");
+        request.onsuccess = (e) => { db = e.target.result; initApp(); };
+
+        function initApp() {
+            const saved = localStorage.getItem('animeDashData');
+            if (saved) {
+                animeData = JSON.parse(saved);
+                renderUI(animeData);
+                updateVisibility(true);
+            } else { updateVisibility(false); }
+        }
+
+        async function getCachedPoster(id, url, imgElement) {
+            if (!db) return;
+            const tx = db.transaction("posters", "readonly");
+            const store = tx.objectStore("posters");
+            const getReq = store.get(id);
+            getReq.onsuccess = async () => {
+                if (getReq.result) { 
+                    imgElement.src = URL.createObjectURL(getReq.result); 
+                } else {
+                    try {
+                        const resp = await fetch(url);
+                        const blob = await resp.blob();
+                        const saveTx = db.transaction("posters", "readwrite");
+                        saveTx.objectStore("posters").put(blob, id);
+                        imgElement.src = URL.createObjectURL(blob);
+                    } catch { imgElement.src = url; }
+                }
+            };
+        }
+
+        const viewGridBtn = document.getElementById('viewGridBtn');
+        const fullScreenGrid = document.getElementById('fullScreenGrid');
+        const gridContainer = document.getElementById('gridContainer');
+        const closeGrid = document.getElementById('closeGrid');
+
+        viewGridBtn.onclick = () => {
+            renderGrid();
+            fullScreenGrid.style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        };
+
+        closeGrid.onclick = () => {
+            fullScreenGrid.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        };
+
+        function renderGrid() {
+            gridContainer.innerHTML = '';
+            const completed = animeData.filter(i => i.status === 'completed');
+            completed.forEach(item => {
+                const title = item.target_title_ru || item.target_title;
+                const posterUrl = `https://shiki.one/system/animes/original/${item.target_id}.jpg`;
+                const card = document.createElement('a');
+                card.className = 'grid-card';
+                card.href = `https://shiki.one/animes/${item.target_id}`;
+                card.target = "_blank";
+                card.innerHTML = `
+                    <img id="grid-img-${item.target_id}" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.src='${fallbackImg}'">
+                    <div class="grid-card-info">
+                        <div class="grid-card-title">${title}</div>
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span class="type-tag" style="font-size:9px;">${item.target_type}</span>
+                            ${item.score > 0 ? `<span style="color:var(--gold); font-weight:bold; font-size:11px;">⭐ ${item.score}</span>` : ''}
+                        </div>
+                    </div>`;
+                gridContainer.appendChild(card);
+                getCachedPoster(item.target_id, posterUrl, card.querySelector(`#grid-img-${item.target_id}`));
+            });
+        }
+
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            const file = e.target.files[0]; // Исправлено: добавлен индекс [0]
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    animeData = JSON.parse(event.target.result);
+                    localStorage.setItem('animeDashData', JSON.stringify(animeData));
+                    renderUI(animeData);
+                    updateVisibility(true);
+                } catch (err) { alert("Ошибка парсинга JSON!"); }
+            };
+            reader.readAsText(file);
+        });
+
+        function updateVisibility(hasData) {
+            document.getElementById('statsDisplay').style.visibility = hasData ? 'visible' : 'hidden';
+            ['randomBtn', 'clearBtn', 'viewGridBtn'].forEach(id => {
+                document.getElementById(id).style.display = hasData ? 'flex' : 'none';
+            });
+            document.getElementById('fileLabel').style.display = hasData ? 'none' : 'flex';
+        }
+
+        document.getElementById('clearBtn').onclick = () => {
+            if(confirm("Удалить все данные и очистить кэш?")) {
+                localStorage.removeItem('animeDashData');
+                location.reload();
+            }
+        };
+
+        function renderUI(data) {
+            const lists = { completed: document.getElementById('completedList'), planned: document.getElementById('plannedList'), dropped: document.getElementById('droppedList') };
+            const counts = { completed: 0, planned: 0, dropped: 0 };
+            Object.values(lists).forEach(l => l.innerHTML = '');
+            data.sort((a, b) => (a.target_title_ru || a.target_title || "").localeCompare(b.target_title_ru || b.target_title || ""));
+            
+            let epTotal = 0, sumScore = 0, countScore = 0;
+
+            data.forEach(item => {
+                const ul = lists[item.status];
+                if (!ul) return;
+                counts[item.status]++;
+                if (item.status === 'completed') {
+                    epTotal += (item.episodes * (1 + (item.rewatches || 0)));
+                    if (item.score > 0) { sumScore += item.score; countScore++; }
+                }
+                const li = document.createElement('li');
+                const title = item.target_title_ru || item.target_title;
+                const posterUrl = `https://shiki.one/system/animes/original/${item.target_id}.jpg`;
+                li.innerHTML = `
+                    <img id="img-${item.target_id}" class="list-poster" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.src='${fallbackImg}'">
+                    <div class="main-info">
+                        <a href="https://shiki.one/animes/${item.target_id}" target="_blank" class="anime-link" title="${title}">${title}</a>
+                        <div class="meta-row"><span class="type-tag">${item.target_type}</span><span>${item.episodes} эп.</span>${item.text ? `<span title="${item.text}">💬</span>` : ''}</div>
+                    </div>
+                    ${item.score > 0 ? `<div class="score">⭐ ${item.score} / 10</div>` : ''}`;
+                ul.appendChild(li);
+                getCachedPoster(item.target_id, posterUrl, li.querySelector(`#img-${item.target_id}`));
+            });
+
+            document.getElementById('totalEpisodes').textContent = epTotal;
+            const h = Math.floor((epTotal * 24) / 60);
+            document.getElementById('totalTime').textContent = `${Math.floor(h/24)}д. ${h%24}ч.`;
+            document.getElementById('avgScore').textContent = countScore ? (sumScore/countScore).toFixed(2) : "0";
+            Object.keys(counts).forEach(id => { document.getElementById(`count-${id}`).textContent = counts[id]; });
+        }
+
+        document.getElementById('searchInput').oninput = (e) => {
+            const term = e.target.value.toLowerCase();
+            let visibleCounts = { completed: 0, planned: 0, dropped: 0 };
+            document.querySelectorAll('ul li').forEach(li => {
+                const text = li.querySelector('.anime-link').textContent.toLowerCase();
+                const isMatch = text.includes(term);
+                li.classList.toggle('hidden', !isMatch);
+                if (isMatch) { visibleCounts[li.closest('ul').id.replace('List', '')]++; }
+            });
+            Object.keys(visibleCounts).forEach(id => { document.getElementById(`count-${id}`).textContent = visibleCounts[id]; });
+        };
+
+        document.getElementById('randomBtn').onclick = () => {
+            const items = Array.from(document.querySelectorAll('#plannedList li:not(.hidden)'));
+            if (!items.length) return;
+            document.querySelectorAll('li.highlight-random').forEach(el => el.classList.remove('highlight-random'));
+            const target = items[Math.floor(Math.random() * items.length)];
+            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            target.classList.add('highlight-random');
+        };
+    </script>
+</body>
+</html>
