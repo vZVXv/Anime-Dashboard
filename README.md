@@ -2,7 +2,7 @@ Google's AI - https://google.com/ai - helped me create this.
 ------------
 Play - https://vzvxv.github.io/Anime-Dashboard/
 ------------
-The version number v1.2.3 has been assigned.
+The version number v1.2.8 has been assigned.
 ------------
 What follows is an untranslatable Russian dialect  
 
@@ -15,4 +15,5 @@ https://shiki.one/ ВАШ ЛОГИН /list_export
 
 ------------
 v1.2.3 добавлен номер версии слева от поиска  
-Изменена заглушка отсутствия картинки.
+Изменена заглушка отсутствия картинки.  
+v1.2.8 - перепись кода. замена системы ссылок. замена системы загрузки обложек (надеюсь)
