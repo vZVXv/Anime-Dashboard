@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Anime Dashboard v1.2.2</title>
+    <title>Anime Dashboard v1.2.3</title>
     <style>
         :root {
             --bg-gradient: linear-gradient(to right, #24243e, #302b63, #0f0c29);
@@ -146,7 +146,10 @@
             <div class="stat-item"><span class="stat-value" id="totalTime">0</span><span class="stat-label">Времени потрачено</span></div>
             <div class="stat-item"><span class="stat-value" id="avgScore">0</span><span class="stat-label">Средний балл</span></div>
         </div>
-        <div class="dash-right"><input type="text" id="searchInput" placeholder="Поиск аниме..."></div>
+        <div class="dash-right">
+    <span class="version-tag">v1.2.3 </span>
+    <input type="text" id="searchInput" placeholder="Поиск аниме...">
+</div>
     </div>
 
     <div class="container">
@@ -165,7 +168,7 @@
 
     <script>
         let animeData = [];
-        const fallbackImg = "https://avatars.mds.yandex.net/i?id=c081274598b979603bc61cf5c4b65e8e_l-5307457-images-thumbs&n=13";
+        const fallbackImg = "https://avatars.mds.yandex.net/i?id=101965c7ffae37ffb927194c3f08c42b4d5515d7-8218669-images-thumbs&n=13";
         const dbName = "AnimePosterCache";
         let db;
 
