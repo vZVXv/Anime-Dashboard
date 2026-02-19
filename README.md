@@ -2,7 +2,7 @@ Google's AI - https://google.com/ai - helped me create this.
 ------------
 Play - https://vzvxv.github.io/Anime-Dashboard/
 ------------
-The version number v1.2.2 has been assigned.
+The version number v1.2.3 has been assigned.
 ------------
 What follows is an untranslatable Russian dialect  
 
