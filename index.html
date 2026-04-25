@@ -125,8 +125,38 @@
 </head>
 <body>
 
+<div id="helpModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background: #1f2937; padding: 40px; border-radius: 16px; max-width: 700px; width: 90%; border: 1px solid #374151; box-shadow: 0 20px 50px rgba(0,0,0,0.6);">
+        <h2 style="margin-top: 0; color: #4ade80; font-size: 1.8rem;">Инструкция по экспорту JSON</h2>
+        
+        <ol style="color: #d1d5db; line-height: 1.8; padding-left: 25px; font-size: 1.1rem;">
+            <li style="margin-bottom: 15px;">
+                Перейдите на сайт <a href="https://shikimori.one" id="helpLink" target="_blank" style="color: #60a5fa; text-decoration: underline;">Shikimori</a> в раздел экспорта:
+                <br>
+                <code style="background: #111; padding: 4px 8px; border-radius: 4px; color: #f472b6; font-family: monospace;">/ваш_ник/list_export</code>
+            </li>
+            <li style="margin-bottom: 10px;">В блоке <b>«Экспорт аниме»</b> выберите формат <b>JSON</b>.</li>
+            <li style="margin-bottom: 10px;">Нажмите кнопку <b>«Экспортировать»</b> и дождитесь загрузки файла.</li>
+            <li style="margin-bottom: 10px;">Вернитесь сюда, нажмите на кнопку выбора файла (иконка папки) и выберите скачанный JSON.</li>
+        </ol>
+
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #374151;">
+            <button onclick="toggleModal('helpModal')" class="btn-action" style="width: 100%; padding: 12px; font-size: 1.1rem; background: #6366f1; color: white; border: none; border-radius: 8px; cursor: pointer;">
+                Понятно, приступим!
+            </button>
+        </div>
+    </div>
+</div>
+
+
+
+
     <div class="dashboard">
+	
         <div class="dash-left">
+		<button onclick="toggleModal('helpModal')" class="btn-action" style="background: #fbbf24; color: #000;">?</button>
+		<button onclick="changeDomain()" class="btn-action" style="background: #6366f1;">Зеркало</button>
+		
             <label id="fileLabel" for="fileInput" class="btn-action">📂 Загрузить JSON</label>
             <input type="file" id="fileInput" accept=".json">
             <button id="viewGridBtn" class="btn-action btn-archive" style="display: none;">🖼 Архив</button>
@@ -159,6 +189,13 @@
         <div class="column dropped"><h2>Брошено <span id="count-dropped" class="counter">0</span></h2><ul id="droppedList"></ul></div>
     </div>
 
+
+
+
+
+
+
+
     <div id="fullScreenGrid">
         <div class="grid-header">
             <h1 style="margin: 0; color: #4ade80;">Архив просмотренного</h1>
@@ -169,16 +206,19 @@
 
     <script>
         // --- 1. ЦЕНТРАЛЬНАЯ КОНФИГУРАЦИЯ ---
-        const CONFIG = {
-            version: "v1.2.8",
-            fallbackImg: "https://avatars.mds.yandex.net/i?id=101965c7ffae37ffb927194c3f08c42b4d5515d7-8218669-images-thumbs&n=13",
-            shiki: {
-                img: (id) => `https://shikimori.io/system/animes/original/${id}.jpg`,
-                url: (id) => `https://shikimori.io/animes/${id}`
-            },
-            dbName: "AnimePosterCache",
-            storageKey: 'animeDashData'
-        };
+const CONFIG = {
+    version: "v1.2.9",
+    // Читаем сохраненный домен или используем дефолтный
+    baseDomain: localStorage.getItem('shiki_domain') || "shikimori.io",
+    fallbackImg: "https://avatars.mds.yandex.net/i?id=101965c7ffae37ffb927194c3f08c42b4d5515d7-8218669-images-thumbs&n=13",
+    shiki: {
+        img: (id) => `https://${CONFIG.baseDomain}/system/animes/original/${id}.jpg`,
+        url: (id) => `https://${CONFIG.baseDomain}/animes/${id}`
+    },
+    dbName: "AnimePosterCache",
+    storageKey: 'animeDashData'
+};
+
 
         let animeData = [];
         let currentLoadSession = 0; 
@@ -191,6 +231,28 @@
             document.querySelector('.version-tag').textContent = CONFIG.version;
             initApp(); 
         };
+
+function toggleModal(id) {
+    const modal = document.getElementById(id);
+    const isVisible = modal.style.display === 'flex';
+    modal.style.display = isVisible ? 'none' : 'flex';
+
+    // Автоматически подставляем актуальный домен в ссылку инструкции
+    if (!isVisible) {
+        const helpLink = document.getElementById('helpLink');
+        if (helpLink) {
+            helpLink.href = `https://${CONFIG.baseDomain}/list_export`;
+            helpLink.textContent = CONFIG.baseDomain;
+        }
+    }
+}
+
+// Закрытие модалки при клике вне контента
+window.onclick = function(event) {
+    const modal = document.getElementById('helpModal');
+    if (event.target === modal) modal.style.display = "none";
+}
+
 
         function initApp() {
             const saved = localStorage.getItem(CONFIG.storageKey);
@@ -237,6 +299,21 @@
                 }
             };
         }
+
+function changeDomain() {
+    const newDomain = prompt("Введите текущий домен Shikimori (например, shikimori.one или shikimori.me):", CONFIG.baseDomain);
+    
+    if (newDomain && newDomain !== CONFIG.baseDomain) {
+        // Убираем протокол, если пользователь ввел его случайно
+        const cleanDomain = newDomain.replace(/^https?:\/\//, '').replace(/\/$/, '');
+        
+        localStorage.setItem('shiki_domain', cleanDomain);
+        alert("Домен изменен! Страница будет перезагружена.");
+        location.reload();
+    }
+}
+
+
 
         function updateImgProgress(total, session) {
             if (session !== currentLoadSession) return;
